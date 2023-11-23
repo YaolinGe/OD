@@ -1,0 +1,28 @@
+# Ignore list to remove the fig folder and corresponding .png, .jpg, .html, .pdf, .svg files etc. 
+
+# Ignore the entire fig directory
+fig/
+
+# Ignore specific file formats in the fig directory
+fig/*.png
+fig/*.jpg
+fig/*.jpeg
+fig/*.html
+fig/*.pdf
+fig/*.svg
+
+# If fig is a subdirectory and you want to exclude files in all such directories at any depth, use the following:
+**/fig/*.png
+**/fig/*.jpg
+**/fig/*.jpeg
+**/fig/*.html
+**/fig/*.pdf
+**/fig/*.svg
+
+# Additionally, if you want to ignore these file formats throughout the entire repository (not just within the fig directory), use:
+*.png
+*.jpg
+*.jpeg
+*.html
+*.pdf
+*.svg
