@@ -49,6 +49,7 @@ class EDA:
         timestamp = df['Timestamp_S'].to_numpy()
         """ make a histogram plot using sns, and use kde estimation to find out the distribution
         and find out the min and max and peak to peak """
+        plt.figure(figsize=(10, 8))
         sns.distplot(adc, hist=True, kde=True,
                         bins=int(180 / 5), color='darkblue',
                         hist_kws={'edgecolor': 'black'},
