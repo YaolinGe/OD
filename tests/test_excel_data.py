@@ -4,6 +4,7 @@ Unittest for oddata.py
 
 from unittest import TestCase
 from src.ExcelData import ExcelData
+# from .ExcelData import ExcelData
 import os
 import pandas as pd
 import numpy as np
@@ -27,4 +28,5 @@ class TestExcelData(TestCase):
 
     def test_synchorize_data(self) -> None:
         df = self.d.synchronize_data()
+        df
         pass
