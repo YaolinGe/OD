@@ -11,7 +11,7 @@ The data object is used to extract the OD turning data from the raw data saved i
 - Temperature: temperature data of the OD turning test
 - Rawdata: raw data of the OD turning test
 """
-from src.usr_func.timestamp2seconds import timestamp2seconds
+from usr_func.timestamp2seconds import timestamp2seconds
 import os
 import pandas as pd
 from scipy.interpolate import interp1d
