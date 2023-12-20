@@ -5,6 +5,8 @@ Author: Yaolin Ge
 Email: geyaolin@gmail.com
 Date: 2023-12-06
 """
+from model.TemperatureData import TemperatureData
+from view.TemperatureVisualizer import TemperatureVisualizer
 from ExcelData import ExcelData
 import numpy as np
 import os
@@ -30,35 +32,66 @@ st.set_page_config(
     }
 )
 
+datapath = os.getcwd() + "/data/"
 data_loaded = False
+temperature_cases = [8, 37, 45, 55, 65, 75, 85]
 
 st.title("Data Analysis App")
 
 # s0, upload data file and save it into a file and read those files accordingly. 
 with st.sidebar: 
-    uploaded_file = st.file_uploader("Upload data file", type=['csv', 'xlsx'])
-    if uploaded_file is not None:
-        if uploaded_file.name.endswith(".csv"):
-            filepath_temp = os.path.join(".tempfiles", "temp_uploaded_file.csv")
-        elif uploaded_file.name.endswith(".xlsx"):
-            filepath_temp = os.path.join(".tempfiles", "temp_uploaded_file.xlsx")
-        else:
-            filepath_temp = None
-        try:
-            with open(filepath_temp, "wb") as f:
-                f.write(uploaded_file.getbuffer())
-        except Exception as e:
-            st.error(f"An error occurred while processing the file: {e}")
+    data_source = st.radio(
+        "Set data source 👇",
+        ["temperature", "OD turning"],
+        captions=["Temperature data for Bobben under difference cases", "OD turning project"],
+        label_visibility="visible",
+    )
 
-    if uploaded_file is not None:
-        dataHandler = ExcelData(filepath=filepath_temp)
-        data = dataHandler.df_sync
-        show_data = st.toggle("Show data")
-        if show_data: 
-            st.dataframe(data, hide_index=True, )
-        else: 
-            st.write("Data not shown.")
-        # if st.button("Show data"):
-        #     st.dataframe(data, hide_index=True, )
-        # st.dataframe(data, hide_index=True, )
+    # add button to select a specific temperature case
+    if data_source == "temperature":
+        temperature_case = st.selectbox(
+            "Select a temperature case 👇",
+            temperature_cases,
+            index=0,
+            format_func=lambda x: f"{x} ℃",
+        )
+        filename = datapath + f"temperature_{temperature_case}.csv"
+        dataHandler = TemperatureData(filename)
+        data = dataHandler.df
+        data_loaded = True
 
+    col1, col2 = st.columns(2)
+    with col1:
+        sensorI = st.checkbox("Sensor I", value=False)
+    with col2:
+        sensorII = st.checkbox("Sensor II", value=False)
+
+    gradient_level = st.slider("Gradient level", min_value=1, max_value=5, value=1, step=1)
+
+if data_source == "temperature" and data_loaded:
+    tv = TemperatureVisualizer(data)
+
+    if sensorI and sensorII:
+        col1, col2 = st.columns(2)
+        with col1:
+            tv.plot_temperature(y="TemperatureSensorI")
+            for i in range(gradient_level): 
+                tv.plot_temperature(y=f"TemperatureSensorI_G{i+1}")
+        with col2:
+            tv.plot_temperature(y="TemperatureSensorII")
+            for i in range(gradient_level): 
+                tv.plot_temperature(y=f"TemperatureSensorII_G{i+1}")
+    elif sensorI:
+        tv.plot_temperature(y="TemperatureSensorI")
+        for i in range(gradient_level): 
+            tv.plot_temperature(y=f"TemperatureSensorI_G{i+1}")
+    elif sensorII: 
+        tv.plot_temperature(y="TemperatureSensorII")
+        for i in range(gradient_level): 
+            tv.plot_temperature(y=f"TemperatureSensorII_G{i+1}")
+    else:
+        st.warning("Please select at least one sensor to plot.") 
+        
+
+
+        
