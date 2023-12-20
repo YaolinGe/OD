@@ -52,6 +52,8 @@ class TemperatureData:
             adc = raw / 65535
             resistance = adc * 40200 / (1 - adc)
             self.df[sensor] = (1 / ((np.log(resistance / 30000) / 3935) + (1 / 298.15))) - 273.15
+            # smooth the sensor data so it is more smooth
+            self.df[sensor] = self.df[sensor].rolling(5, min_periods=1).mean()
             # self.df[sensor] = self.df[sensor].interpolate(method='linear')
 
     def calculate_gradients(self):
@@ -61,6 +63,11 @@ class TemperatureData:
                 prev_col = sensor if i == 1 else f'{sensor}_G{i-1}'
                 self.df[col_name] = np.gradient(self.df[prev_col], self.df['ElapsedSeconds'])
         self.df = self.df.round(5)
+
+    def smooth_data(self, timewindow: int = 0):
+        for sensor in ['TemperatureSensorI', 'TemperatureSensorII']:
+            self.df[sensor] = self.df[sensor].rolling(timewindow, min_periods=1).mean()
+        self.calculate_gradients()
 
 
 if __name__ == "__main__":

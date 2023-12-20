@@ -68,9 +68,11 @@ with st.sidebar:
 
     gradient_level = st.slider("Gradient level", min_value=1, max_value=5, value=1, step=1)
 
-if data_source == "temperature" and data_loaded:
-    tv = TemperatureVisualizer(data)
+    timewindow = st.slider("Smooth time window", min_value=1, max_value=500, value=1, step=50)
 
+if data_source == "temperature" and data_loaded:
+    dataHandler.smooth_data(timewindow)
+    tv = TemperatureVisualizer(data)
     if sensorI and sensorII:
         col1, col2 = st.columns(2)
         with col1:
