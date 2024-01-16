@@ -27,14 +27,14 @@ class TemperatureData:
             raise ValueError("The file is empty.")
 
     def load_data(self) -> None:
-        self.df = pd.read_csv(self.fileath, sep=": ", header=None)
+        self.df = pd.read_csv(self.fileath, sep=": ", header=None, engine='python')
         if self.df.shape[1] != 3:
             raise ValueError("The file must have three columns.")
         self.df.columns = ['Timestamp', 'TemperatureSensorI', 'TemperatureSensorII']
         self.process_timestamps()
         self.calculate_elapsed_seconds()
         self.interpolate_temperatures()
-        self.calculate_gradients()
+        # self.calculate_gradients()
 
     def process_timestamps(self):
         self.df['Timestamp'] = self.df['Timestamp'].str.replace('PM|AM', '', regex=True).str.replace('/', '-')

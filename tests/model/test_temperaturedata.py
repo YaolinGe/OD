@@ -15,4 +15,5 @@ class TestTemperatureData(TestCase):
 
     def test_temperature_data(self):
         df = self.td.df
+        plt.plot(df["ElapsedSeconds"], df["TemperatureSensorI"])
         df
