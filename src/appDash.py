@@ -13,10 +13,10 @@ from dash import html, dcc, callback, Input, Output, State
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 
-from components.controls import get_dashboard
-from layout.layout import update_layout
+from components.components import get_dashboard, get_timeslider
+from layouts.layouts import update_layout
 from model.TemperatureData import TemperatureData
-from callbacks.callbacks import add_callbacks
+from callbacks.callbacks import add_timeseries_callback
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', dbc.themes.BOOTSTRAP]
 
@@ -29,12 +29,16 @@ filename = datapath + f"temperature_{temperature_case}.csv"
 dataHandler = TemperatureData(filename)
 data = dataHandler.df
 
-dashboard = get_dashboard(temperature_cases)
-update_layout(app, dashboard)
 
-add_callbacks(app)
+dashboard = get_dashboard(temperature_cases)
+
+update_layout(app, dashboard, get_timeslider())
+
+add_timeseries_callback(app)
 
 
 if __name__ == "__main__":
     app.run_server(debug=True, port=1000)
+
+
 
