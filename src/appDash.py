@@ -40,5 +40,3 @@ add_timeseries_callback(app)
 if __name__ == "__main__":
     app.run_server(debug=True, port=1000)
 
-
-

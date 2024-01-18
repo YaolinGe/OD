@@ -22,8 +22,44 @@ def get_dashboard(temperature_cases):
             dcc.Input(id="slider_timewindow", type="number", value=10),
         ]),
         html.Div([
-            dbc.Label("Smoother"),
-            dcc.Dropdown(id="smoother", options=[{"label": "None", "value": "None"}, {"label": "Savitzky-Golay", "value": "Savitzky-Golay"}], value="None", multi=False),
+            dbc.Label("Select a smoothing algorithm"),
+            dcc.RadioItems(id="smoother", options=['Moving average',
+                                                   'Gaussian smoothing',
+                                                   'Lowess',
+                                                   'Savitzky-Golay Filter',
+                                                   'Median filter',
+                                                   'Kalman filter',
+                                                   'Wavelet transform',
+                                                   'Fourier transform',
+                                                   'Holt-Winters Exponential Smoothing'],
+                           value='Moving average'),
+        ], style={"align-items": "center"}),
+        html.Div([
+            dbc.Label("Select a predicting algorithm"),
+            dcc.RadioItems(id="predictor", options=['ARIMA',
+                                                    # 'SARIMA',
+                                                    # 'Gaussian Process',
+                                                    ],
+                           value='ARIMA')
+        ]),
+        html.Div([
+            dbc.Label("Specify the predicting parameter"),
+            dbc.Row([
+                dbc.Col([
+                    dbc.Col([
+                        dbc.Label("p"),
+                        dcc.Input(id="p", type="number", value=1),
+                    ]),
+                    dbc.Col([
+                        dbc.Label("d"),
+                        dcc.Input(id="d", type="number", value=1),
+                    ]),
+                    dbc.Col([
+                        dbc.Label("q"),
+                        dcc.Input(id="q", type="number", value=1),
+                    ]),
+                ]),
+            ])
         ])
     ], body=True)
     return dashboard
@@ -32,6 +68,6 @@ def get_dashboard(temperature_cases):
 def get_timeslider():
     timeslider = dbc.Row([
         dbc.Label("Time slider"),
-        dcc.Slider(id="slider", min=0, max=100, marks=None, value=0),
+        dcc.Slider(id="slider", min=2, max=100, marks=None, value=10),
     ])
     return timeslider
