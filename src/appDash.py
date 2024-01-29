@@ -17,6 +17,7 @@ from components.components import get_dashboard, get_timeslider
 from layouts.layouts import update_layout
 from model.TemperatureData import TemperatureData
 from callbacks.callbacks import add_timeseries_callback
+from model.DataLoader import DataLoader
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css', dbc.themes.BOOTSTRAP]
 
@@ -26,8 +27,6 @@ datapath = os.getcwd() + "/data/"  # Update this with the correct path
 temperature_cases = [8, 37, 45, 55, 65, 75, 85]
 temperature_case = temperature_cases[0]
 filename = datapath + f"temperature_{temperature_case}.csv"
-dataHandler = TemperatureData(filename)
-data = dataHandler.df
 
 
 dashboard = get_dashboard(temperature_cases)
