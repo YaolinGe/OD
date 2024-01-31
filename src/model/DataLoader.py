@@ -14,6 +14,7 @@ class DataLoader:
 
     def __init__(self, dataScheme: DataScheme, filePath: str) -> None:
         self._dataScheme = dataScheme
+        # I need to think about how I can specify the data file path
         pass
 
     @property
