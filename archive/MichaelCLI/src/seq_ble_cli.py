@@ -958,13 +958,17 @@ class _BleCli(Cmd, OdTurningBle):
 #######################################################################################################################
 #
 #######################################################################################################################
+        
+def main(): 
+    
+        p = psutil.Process(os.getpid())
+    
+        p.nice(psutil.ABOVE_NORMAL_PRIORITY_CLASS)
+        # p.nice(psutil.HIGH_PRIORITY_CLASS)
+    
+        _BleCli().cmdloop()
+    
+        exit(0)
+
 if __name__ == '__main__':
-
-    p = psutil.Process(os.getpid())
-
-    p.nice(psutil.ABOVE_NORMAL_PRIORITY_CLASS)
-    # p.nice(psutil.HIGH_PRIORITY_CLASS)
-
-    _BleCli().cmdloop()
-
-    exit(0)
+    main()
