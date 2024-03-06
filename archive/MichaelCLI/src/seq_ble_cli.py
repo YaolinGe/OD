@@ -17,12 +17,8 @@ import psutil
 import os
 
 
-#######################################################################################################################
-#
-#######################################################################################################################
 class _BleCli(Cmd, OdTurningBle):
 
-    ###################################################################################################################
     def __init__(self):
 
         Cmd.__init__(self)
@@ -33,11 +29,9 @@ class _BleCli(Cmd, OdTurningBle):
         OdTurningBle.__init__(self, )
         OdTurningBle.__enter__(self)
 
-    ####################################################################################################################
     def emptyline(self):
         pass
 
-    ####################################################################################################################
     def default(self, inp):
         if inp == 'x' or inp == 'q':
             return self.do_exit(inp)
@@ -74,7 +68,6 @@ class _BleCli(Cmd, OdTurningBle):
 
         print("Unrecognised command {0}".format(inp))
 
-    ####################################################################################################################
     def do_exit(self, input):
         print("Ciao!")
         return True
@@ -82,14 +75,12 @@ class _BleCli(Cmd, OdTurningBle):
     do_EOF = do_exit
     do_quit = do_exit
 
-    ####################################################################################################################
     def help_exit(self):
         print('exit                                           Exit the application. Shorthand: x q Ctrl-D')
 
     help_EOF = help_exit
     help_quit = help_exit
 
-    ####################################################################################################################
     def _reparse_args(self, args):
 
         try:
@@ -100,16 +91,13 @@ class _BleCli(Cmd, OdTurningBle):
 
         return True
 
-    ####################################################################################################################
     def do_scan(self, args):
 
         self.event_loop.run_until_complete(self.scan_print_list())
 
-    ####################################################################################################################
     def help_scan(self):
         print("scan or s                                          Scan for nearby BLE Devices")
 
-    ####################################################################################################################
     async def _do_scan_loop(self):
 
         while not msvcrt.kbhit():
@@ -118,16 +106,13 @@ class _BleCli(Cmd, OdTurningBle):
 
         msvcrt.getch()
 
-    ####################################################################################################################
     def do_scan_loop(self, args):
 
         self.event_loop.run_until_complete(self._do_scan_loop())
 
-    ####################################################################################################################
     def help_scan_loop(self):
         print("scanloop or sl                                          Scan loop for nearby BLE Devices")
 
-    ####################################################################################################################
     async def _connect(self, pos):
 
         await self.connect(pos)
@@ -179,56 +164,45 @@ class _BleCli(Cmd, OdTurningBle):
             print("UNDEF")
         print("PHY status                  {0}".format(phyStatus))
 
-    ####################################################################################################################
     def do_connect(self, args):
 
         pos = int(args)
 
         self.event_loop.run_until_complete(self._connect(pos))
 
-    ####################################################################################################################
     def help_connect(self):
         print("connect or c                                       Connect to BLE device")
 
-    ####################################################################################################################
     def do_disconnect(self, args):
 
         self.event_loop.run_until_complete(self.disconnect())
 
-    ####################################################################################################################
     def help_disconnect(self):
         print("disconnect or d                                    Disconnect to BLE device")
 
-    ####################################################################################################################
     def do_fw_disconnect(self, args):
 
         self.event_loop.run_until_complete(self.fw_disconnect(delay_before_disconnect_ms=1000))
 
-    ####################################################################################################################
     def help_fw_disconnect(self):
         print("fw_disconnect or dfw                                    Disconnect to BLE device from FW side")
 
-    ####################################################################################################################
     def do_restart(self, args):
 
         self.event_loop.run_until_complete(self.restart(int(args)))
 
-    ####################################################################################################################
     def help_restart(self):
         print("restart or re                                    System restart")
 
-    ####################################################################################################################
     def do_device_info(self, args):
 
         self.event_loop.run_until_complete(self._device_info_service.device_info_get())
 
         self.event_loop.run_until_complete(self.monitor_service.sys_status_get())
 
-    ####################################################################################################################
     def help_device_info(self):
         print("device_info or di                                   Read SRTH device information")
 
-    ####################################################################################################################
     async def _sensor_stream(self, sg_sensor_id, sg_sibp, sg_air, sg_cor_hz, sg_dor_hz, sg_fir_skip, sg_chop_en, sg_dac_mv,
                              accel_sensor_id, accel_sibp, accel_range, accel_hpf, accel_dor,
                              accel_temp_sensor_id,
@@ -386,7 +360,6 @@ class _BleCli(Cmd, OdTurningBle):
 
         msvcrt.getch()
 
-    ####################################################################################################################
     def do_sensor_stream(self, args):
 
         self.event_loop.run_until_complete(self._sensor_stream(
@@ -412,11 +385,9 @@ class _BleCli(Cmd, OdTurningBle):
 
         return
 
-    ####################################################################################################################
     def help_sensor_stream(self):
         print("sensor_stream or str                          Start streaming sensors")
 
-    ####################################################################################################################
     def _sbc2_samples_per_second(self, power_mode, filter_type, fs):
 
         if power_mode == 0:
@@ -447,7 +418,6 @@ class _BleCli(Cmd, OdTurningBle):
         else:
             return 0
 
-    ####################################################################################################################
     def _sbc2_v2_settling_time(self, power_mode, filter_type, fs):
 
         if power_mode == 0:
@@ -485,7 +455,6 @@ class _BleCli(Cmd, OdTurningBle):
         else:
             return 0
 
-    ####################################################################################################################
     async def _sensor_stream2(self, sg_v2_sensor_id, sg_v2_sibp, sg_v2_pwr_mode,
                               sg_v2_ch0_en, sg_v2_ch0_pga_gain, sg_v2_ch0_filter_type, sg_v2_ch0_rej60, sg_v2_ch0_fs,
                               sg_v2_ch1_en, sg_v2_ch1_pga_gain, sg_v2_ch1_filter_type, sg_v2_ch1_rej60, sg_v2_ch1_fs,
@@ -738,7 +707,6 @@ class _BleCli(Cmd, OdTurningBle):
 
         msvcrt.getch()
 
-    ####################################################################################################################
     def do_sensor_stream2(self, args):
 
         self.event_loop.run_until_complete(self._sensor_stream2(
@@ -783,11 +751,9 @@ class _BleCli(Cmd, OdTurningBle):
 
         return
 
-    ####################################################################################################################
     def help_sensor_stream2(self):
         print("sensor_stream2 or str2                          Start streaming sensors v2")
 
-    ####################################################################################################################
     async def _connect_disconnect_test(self, device_position):
 
         test_loop = 1
@@ -867,18 +833,15 @@ class _BleCli(Cmd, OdTurningBle):
 
         msvcrt.getch()
 
-    ####################################################################################################################
     def do_connect_disconnect_test(self, args):
 
         pos = int(args)
 
         self.event_loop.run_until_complete(self._connect_disconnect_test(pos))
 
-    ####################################################################################################################
     def help_connect_disconnect_test(self):
         print("con_discon or cdt                          Connect/Disconnect test")
 
-    ####################################################################################################################
     async def _reboot_test(self, device_position):
 
         test_loop = 1
@@ -903,40 +866,33 @@ class _BleCli(Cmd, OdTurningBle):
 
         msvcrt.getch()
 
-    ####################################################################################################################
     def do_reboot_test(self, args):
 
         pos = int(args)
 
         self.event_loop.run_until_complete(self._reboot_test(pos))
 
-    ####################################################################################################################
     def help_reboot_test(self):
         print("reboot or rbt                          Reboot test")
 
-    ####################################################################################################################
     def do_pair(self, args):
 
         pos = int(args)
 
         self.event_loop.run_until_complete(self.pair(pos))
 
-    ####################################################################################################################
     def help_pair(self):
         print("pair or p                          Pair device")
 
-    ####################################################################################################################
     def do_status(self):
 
         sts = self.event_loop.run_until_complete(self.monitor_service.sys_status_get())
 
         print("STATUS: {0}".format(sts))
 
-    ####################################################################################################################
     def help_status(self):
         print("status or sts                          Status get")
 
-    ####################################################################################################################
     async def _disconnect_wait_test(self):
 
         print("")
@@ -945,30 +901,24 @@ class _BleCli(Cmd, OdTurningBle):
         while not await self.check_loop_exit():
             await asyncio.sleep(0.5)
 
-    ####################################################################################################################
     def do_disconnect_wait_test(self, args):
 
         self.event_loop.run_until_complete(self._disconnect_wait_test())
 
-    ####################################################################################################################
     def help_disconnect_wait_test(self):
         print("disconnect_wait_test or dwt              Wait for sudden disconnects")
 
 
-#######################################################################################################################
-#
-#######################################################################################################################
-        
 def main(): 
     
         p = psutil.Process(os.getpid())
     
         p.nice(psutil.ABOVE_NORMAL_PRIORITY_CLASS)
-        # p.nice(psutil.HIGH_PRIORITY_CLASS)
-    
+            
         _BleCli().cmdloop()
     
         exit(0)
+        
 
 if __name__ == '__main__':
     main()
