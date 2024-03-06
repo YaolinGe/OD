@@ -1,13 +1,7 @@
 import asyncio
-
-#######################################################################################################################
-#
-#######################################################################################################################
 from od_turning_ble import OdTurningBle
 from device_info_service import DeviceInfoService
 from teeness_protocol import TeenessApplCmdPacket
-
-# import asyncio
 import time
 import shlex
 from cmd import Cmd
@@ -23,7 +17,7 @@ class _BleCli(Cmd, OdTurningBle):
 
         Cmd.__init__(self)
         self.prompt = 'ODT_CLI> '
-        self.intro = "Welcome to OD Turning BLE Command Line Tool"
+        self.intro = "Robust version"
         self.doc_header = "Welcome to help!"
 
         OdTurningBle.__init__(self, )
