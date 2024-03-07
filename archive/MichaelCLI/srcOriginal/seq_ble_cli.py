@@ -1,7 +1,13 @@
 import asyncio
+
+#######################################################################################################################
+#
+#######################################################################################################################
 from od_turning_ble import OdTurningBle
 from device_info_service import DeviceInfoService
 from teeness_protocol import TeenessApplCmdPacket
+
+# import asyncio
 import time
 import shlex
 from cmd import Cmd
@@ -17,7 +23,7 @@ class _BleCli(Cmd, OdTurningBle):
 
         Cmd.__init__(self)
         self.prompt = 'ODT_CLI> '
-        self.intro = "Robust version"
+        self.intro = "Welcome to OD Turning BLE Command Line Tool"
         self.doc_header = "Welcome to help!"
 
         OdTurningBle.__init__(self, )
@@ -621,7 +627,7 @@ class _BleCli(Cmd, OdTurningBle):
                         sg_bt_ch1_counter += 1
                     elif sl[0] == 2:
                         log_string = "{0:.05f},{1}".format(timestamp + (sample_counter * sg_bt_ch2_settling_time), sl[1])
-                        sg_bt_ch2_v2_file.write(log_string + "\n") 
+                        sg_bt_ch2_v2_file.write(log_string + "\n")
                         sg_bt_ch2_counter += 1
                     elif sl[0] == 3:
                         log_string = "{0:.05f},{1}".format(timestamp + (sample_counter * sg_bt_ch3_settling_time), sl[1])

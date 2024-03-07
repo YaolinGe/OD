@@ -47,19 +47,18 @@ class TeenessApplCmdPacket:
     GET_VERSION = 122
     REBOOT = 123
 
+    SET_STREAM_SYS_CLOCK = 130
+    GET_STREAM_SYS_CLOCK = 131
     GET_BLE_CONNECTION_STS = 132
     SET_BLE_FW_DISCONNECT = 133
-    SET_BLE_STREAM_OUTPUT_STATE = 134
-    SET_SYS_DEEP_POWER_DOWN = 135
 
     STREAM_SENSOR_ID_NONE = 0
     STREAM_SENSOR_ID_SG_BT1 = 11
     STREAM_SENSOR_ID_SG_BT2 = 12
     STREAM_SENSOR_ID_SG_BT1_BT2 = 13
     STREAM_SENSOR_ID_MCU_HUMIDITY = 21
-    STREAM_SENSOR_ID_SBC1_ACCEL_mG = 31
-    STREAM_SENSOR_ID_SBC1_ACCEL_RAW = 32
-    STREAM_SENSOR_ID_SBC1_ACCEL_TEMPERATURE = 39
+    STREAM_SENSOR_ID_SBC1_ACCEL = 31
+    STREAM_SENSOR_ID_SBC1_ACCEL_TEMPERATURE = 32
     STREAM_SENSOR_ID_SG_V2_BT = 41
 
     STREAM_SENSOR_SG_ANALOG_INPUT_RANGE_m10_p10_mV = 1010
@@ -79,7 +78,7 @@ class TeenessApplCmdPacket:
             raise OdTurningError("TeenessApplCmdPacket", "Invalid command id. Expected {0}. Received {1}".format(cmd, teeness_packet.data_bytes[1]))
 
         if self.CMD_REPLY != teeness_packet.data_bytes[0]:
-            raise OdTurningError("TeenessApplCmdPacket", "Invalid response indicator. Expected {0}. Received {1}".format(self.CMD_REPLY, teeness_packet.data_bytes[0]))
+            raise OdTurningError("TeenessApplCmdPacket", "Invalid response indicator")
 
         req_id = int.from_bytes(teeness_packet.data_bytes[teeness_packet.data_length - 2:],
                                 byteorder="little", signed=False)
@@ -395,20 +394,6 @@ class TeenessProtocol:
                 status))
 
     ###################################################################################################################
-    async def appl_cmd_deep_power_down(self):
-
-        print("Deep power down...")
-
-        appl_cmd_packet = await self.exec_appl_cmd(TeenessApplCmdPacket.SET_SYS_DEEP_POWER_DOWN, bytearray(), 2)
-        status = int.from_bytes(appl_cmd_packet.data_bytes, byteorder='little', signed=False)
-
-        if status != 0:
-            raise OdTurningError("TeenessProtocol", "Status code {0} received.".format(
-                status))
-
-        await self._client.disconnect()
-
-    ###################################################################################################################
     async def appl_cmd_fw_disconnect(self, delay_before_disconnect_ms):
 
         data_bytes = delay_before_disconnect_ms.to_bytes(4, byteorder='little', signed=False)
@@ -421,16 +406,34 @@ class TeenessProtocol:
                 status))
 
     ###################################################################################################################
-    async def appl_cmd_ble_stream_output_state(self, enable):
+    async def appl_cmd_set_stream_sys_clock(self, sys_clock_MHz):
 
-        data_bytes = enable.to_bytes(1, byteorder='little', signed=False)
+        print("Stream system clock set {0} MHz...".format(sys_clock_MHz))
 
-        appl_cmd_packet = await self.exec_appl_cmd(TeenessApplCmdPacket.SET_BLE_STREAM_OUTPUT_STATE, data_bytes, 2)
+        data_bytes = sys_clock_MHz.to_bytes(1, byteorder='little', signed=False)
+
+        appl_cmd_packet = await self.exec_appl_cmd(TeenessApplCmdPacket.SET_STREAM_SYS_CLOCK, data_bytes, 2)
         status = int.from_bytes(appl_cmd_packet.data_bytes, byteorder='little', signed=False)
 
         if status != 0:
             raise OdTurningError("TeenessProtocol", "Status code {0} received.".format(
                 status))
+
+    ###################################################################################################################
+    async def appl_cmd_get_stream_sys_clock(self):
+
+        print("Stream system clock get...")
+
+        appl_cmd_packet = await self.exec_appl_cmd(TeenessApplCmdPacket.GET_STREAM_SYS_CLOCK, bytearray(), 3)
+
+        status = int.from_bytes(appl_cmd_packet.data_bytes[1:3], byteorder='little', signed=False)
+        sys_clock_MHz = int.from_bytes(appl_cmd_packet.data_bytes[0:1], byteorder='little', signed=False)
+
+        if status != 0:
+            raise OdTurningError("TeenessProtocol", "Status code {0} received.".format(
+                status))
+
+        return sys_clock_MHz
 
     ###################################################################################################################
     async def get_ble_connection_sts(self):
@@ -455,6 +458,7 @@ class TeenessProtocol:
     ###################################################################################################################
     async def appl_cmd_stream_sbc2_strain_gauge_start(self,
                                                       sensor_id,
+                                                      stream_start_delay_ms,
                                                       samples_in_ble_packet,
                                                       analog_input_range,
                                                       calib_output_rate_hz,
@@ -466,6 +470,7 @@ class TeenessProtocol:
         print("Stream sensor {0} SBC2 strain gauge start...".format(sensor_id))
 
         data_bytes = sensor_id.to_bytes(1, byteorder='little', signed=False)
+        data_bytes += stream_start_delay_ms.to_bytes(2, byteorder='little', signed=False)
         data_bytes += samples_in_ble_packet.to_bytes(2, byteorder='little', signed=False)
         data_bytes += analog_input_range.to_bytes(2, byteorder='little', signed=False)
         data_bytes += calib_output_rate_hz.to_bytes(2, byteorder='little', signed=False)
@@ -492,32 +497,25 @@ class TeenessProtocol:
     ###################################################################################################################
     async def appl_cmd_stream_sbc2_strain_gauge_v2_start(self,
                                                          sensor_id,
+                                                         stream_start_delay_ms,
                                                          samples_in_ble_packet,
                                                          power_mode,
                                                          channel0_en,
-                                                         channel0_bipolar,
-                                                         channel0_ref_source,
                                                          channel0_pga_gain,
                                                          channel0_filter_type,
                                                          channel0_reject60,
                                                          channel0_fs,
                                                          channel1_en,
-                                                         channel1_bipolar,
-                                                         channel1_ref_source,
                                                          channel1_pga_gain,
                                                          channel1_filter_type,
                                                          channel1_reject60,
                                                          channel1_fs,
                                                          channel2_en,
-                                                         channel2_bipolar,
-                                                         channel2_ref_source,
                                                          channel2_pga_gain,
                                                          channel2_filter_type,
                                                          channel2_reject60,
                                                          channel2_fs,
                                                          channel3_en,
-                                                         channel3_bipolar,
-                                                         channel3_ref_source,
                                                          channel3_pga_gain,
                                                          channel3_filter_type,
                                                          channel3_reject60,
@@ -526,32 +524,25 @@ class TeenessProtocol:
         print("Stream sensor {0} SBC2 V2 strain gauge start...".format(sensor_id))
 
         data_bytes = sensor_id.to_bytes(1, byteorder='little', signed=False)
+        data_bytes += stream_start_delay_ms.to_bytes(2, byteorder='little', signed=False)
         data_bytes += samples_in_ble_packet.to_bytes(2, byteorder='little', signed=False)
         data_bytes += power_mode.to_bytes(1, byteorder='little', signed=False)
         data_bytes += channel0_en.to_bytes(1, byteorder='little', signed=False)
-        data_bytes += channel0_bipolar.to_bytes(1, byteorder='little', signed=False)
-        data_bytes += channel0_ref_source.to_bytes(1, byteorder='little', signed=False)
         data_bytes += channel0_pga_gain.to_bytes(1, byteorder='little', signed=False)
         data_bytes += channel0_filter_type.to_bytes(1, byteorder='little', signed=False)
         data_bytes += channel0_reject60.to_bytes(1, byteorder='little', signed=False)
         data_bytes += channel0_fs.to_bytes(2, byteorder='little', signed=False)
         data_bytes += channel1_en.to_bytes(1, byteorder='little', signed=False)
-        data_bytes += channel1_bipolar.to_bytes(1, byteorder='little', signed=False)
-        data_bytes += channel1_ref_source.to_bytes(1, byteorder='little', signed=False)
         data_bytes += channel1_pga_gain.to_bytes(1, byteorder='little', signed=False)
         data_bytes += channel1_filter_type.to_bytes(1, byteorder='little', signed=False)
         data_bytes += channel1_reject60.to_bytes(1, byteorder='little', signed=False)
         data_bytes += channel1_fs.to_bytes(2, byteorder='little', signed=False)
         data_bytes += channel2_en.to_bytes(1, byteorder='little', signed=False)
-        data_bytes += channel2_bipolar.to_bytes(1, byteorder='little', signed=False)
-        data_bytes += channel2_ref_source.to_bytes(1, byteorder='little', signed=False)
         data_bytes += channel2_pga_gain.to_bytes(1, byteorder='little', signed=False)
         data_bytes += channel2_filter_type.to_bytes(1, byteorder='little', signed=False)
         data_bytes += channel2_reject60.to_bytes(1, byteorder='little', signed=False)
         data_bytes += channel2_fs.to_bytes(2, byteorder='little', signed=False)
         data_bytes += channel3_en.to_bytes(1, byteorder='little', signed=False)
-        data_bytes += channel3_bipolar.to_bytes(1, byteorder='little', signed=False)
-        data_bytes += channel3_ref_source.to_bytes(1, byteorder='little', signed=False)
         data_bytes += channel3_pga_gain.to_bytes(1, byteorder='little', signed=False)
         data_bytes += channel3_filter_type.to_bytes(1, byteorder='little', signed=False)
         data_bytes += channel3_reject60.to_bytes(1, byteorder='little', signed=False)
@@ -572,11 +563,12 @@ class TeenessProtocol:
         return status
 
     ###################################################################################################################
-    async def appl_cmd_stream_mcu_humidity_start(self, sensor_id):
+    async def appl_cmd_stream_mcu_humidity_start(self, sensor_id, stream_start_delay_ms):
 
         print("Stream sensor {0} MCU humidity start...".format(sensor_id))
 
         data_bytes = sensor_id.to_bytes(1, byteorder='little', signed=False)
+        data_bytes += stream_start_delay_ms.to_bytes(2, byteorder='little', signed=False)
 
         self._humidity_packets = 0
 
@@ -593,11 +585,12 @@ class TeenessProtocol:
         return status
 
     ###################################################################################################################
-    async def appl_cmd_stream_sbc1_accel_temperature_start(self, sensor_id):
+    async def appl_cmd_stream_sbc1_accel_temperature_start(self, sensor_id, stream_start_delay_ms):
 
         print("Stream sensor {0} SBC1 accelerometer temperature start...".format(sensor_id))
 
         data_bytes = sensor_id.to_bytes(1, byteorder='little', signed=False)
+        data_bytes += stream_start_delay_ms.to_bytes(2, byteorder='little', signed=False)
 
         self._accel_temperature_packets = 0
 
@@ -614,12 +607,13 @@ class TeenessProtocol:
         return status
 
     ###################################################################################################################
-    async def appl_cmd_stream_sbc1_accel_start(self, sensor_id, samples_in_ble_packet, working_range,
-                                               high_pass_filter, data_output_rate):
+    async def appl_cmd_stream_sbc1_accel_start(self, sensor_id, stream_start_delay_ms, samples_in_ble_packet,
+                                              working_range, high_pass_filter, data_output_rate):
 
         print("Stream sensor {0} SBC1 accelerometer start...".format(sensor_id))
 
         data_bytes = sensor_id.to_bytes(1, byteorder='little', signed=False)
+        data_bytes += stream_start_delay_ms.to_bytes(2, byteorder='little', signed=False)
 
         data_bytes += samples_in_ble_packet.to_bytes(2, byteorder='little', signed=False)
         data_bytes += working_range.to_bytes(1, byteorder='little', signed=False)
@@ -661,8 +655,7 @@ class TeenessProtocol:
                     self._bt2_packets += 1
                 elif packet.data_bytes[1] == TeenessApplCmdPacket.STREAM_SENSOR_ID_MCU_HUMIDITY:
                     self._humidity_packets += 1
-                elif (packet.data_bytes[1] == TeenessApplCmdPacket.STREAM_SENSOR_ID_SBC1_ACCEL_mG) or \
-                        (packet.data_bytes[1] == TeenessApplCmdPacket.STREAM_SENSOR_ID_SBC1_ACCEL_RAW):
+                elif packet.data_bytes[1] == TeenessApplCmdPacket.STREAM_SENSOR_ID_SBC1_ACCEL:
                     self._accel_packets += 1
                 elif packet.data_bytes[1] == TeenessApplCmdPacket.STREAM_SENSOR_ID_SBC1_ACCEL_TEMPERATURE:
                     self._accel_temperature_packets += 1
@@ -691,8 +684,7 @@ class TeenessProtocol:
         if print_response:
             if sensor_id == TeenessApplCmdPacket.STREAM_SENSOR_ID_SBC1_ACCEL_TEMPERATURE:
                 print("Number of PC packets:         {0} packets".format(self._accel_temperature_packets))
-            if (sensor_id == TeenessApplCmdPacket.STREAM_SENSOR_ID_SBC1_ACCEL_mG) or \
-                    (sensor_id == TeenessApplCmdPacket.STREAM_SENSOR_ID_SBC1_ACCEL_RAW):
+            if sensor_id == TeenessApplCmdPacket.STREAM_SENSOR_ID_SBC1_ACCEL:
                 print("Number of PC packets:         {0} packets".format(self._accel_packets))
             if sensor_id == TeenessApplCmdPacket.STREAM_SENSOR_ID_MCU_HUMIDITY:
                 print("Number of PC packets:         {0} packets".format(self._humidity_packets))
@@ -712,11 +704,9 @@ class TeenessProtocol:
             print("Number of interrupts:         {0} interrupts".format(no_of_irq_samples))
             print("Interrupt rate:               {0:.2f} irq/sec".format(no_of_irq_samples / ((stop_time_ms - start_time_ms) / 1000.0)))
             print("Sample time:                  {0:.03f} s".format(((stop_time_ms - start_time_ms) / 1000.0)))
-
-            if no_of_served_samples > 0:
-                print("Sample served rate:           {0:.2f} samples/sec, {1:.6f} sec/samples".format(
-                    no_of_served_samples / ((stop_time_ms - start_time_ms) / 1000.0),
-                    ((stop_time_ms - start_time_ms) / 1000.0) / no_of_served_samples))
+            print("Sample served rate:           {0:.2f} samples/sec, {1:.6f} sec/samples".format(
+                no_of_served_samples / ((stop_time_ms - start_time_ms) / 1000.0),
+                ((stop_time_ms - start_time_ms) / 1000.0) / no_of_served_samples))
 
         print("Stream sensor {0} stopped.".format(sensor_id))
 
@@ -774,7 +764,7 @@ class TeenessProtocol:
         sensor_id = packet.data_bytes[1]
         timestamp = self.timestamp_to_s(int.from_bytes(packet.data_bytes[2:6], byteorder='little', signed=False))
 
-        if sensor_id == TeenessApplCmdPacket.STREAM_SENSOR_ID_SBC1_ACCEL_mG:
+        if sensor_id == TeenessApplCmdPacket.STREAM_SENSOR_ID_SBC1_ACCEL:
 
             if (packet.data_length - 6) % 12 != 0:
                 raise OdTurningError("TeenessProtocol", "Invalid application packet length {0}.".format(
@@ -796,33 +786,7 @@ class TeenessProtocol:
 
                 sample_counter += 1
 
-            return TeenessApplCmdPacket.STREAM_SENSOR_ID_SBC1_ACCEL_mG, timestamp, sample_list
-
-        elif sensor_id == TeenessApplCmdPacket.STREAM_SENSOR_ID_SBC1_ACCEL_RAW:
-
-            if (packet.data_length - 6) % 12 != 0:
-                raise OdTurningError("TeenessProtocol", "Invalid application packet length {0}.".format(
-
-                    packet.data_length))
-
-            self._accel_packets += 1
-
-            no_of_samples_in_pkt = (packet.data_length - 6) / 12
-
-            sample_counter = 0
-
-            sample_list = []
-
-            while sample_counter < no_of_samples_in_pkt:
-                X = int.from_bytes(packet.data_bytes[6 + (sample_counter * 12): 10 + (sample_counter * 12)], byteorder='little', signed=True)
-                Y = int.from_bytes(packet.data_bytes[10 + (sample_counter * 12): 14 + (sample_counter * 12)], byteorder='little', signed=True)
-                Z = int.from_bytes(packet.data_bytes[14 + (sample_counter * 12): 18 + (sample_counter * 12)], byteorder='little', signed=True)
-
-                sample_list.append([X, Y, Z])
-
-                sample_counter += 1
-
-            return TeenessApplCmdPacket.STREAM_SENSOR_ID_SBC1_ACCEL_RAW, timestamp, sample_list
+            return TeenessApplCmdPacket.STREAM_SENSOR_ID_SBC1_ACCEL, timestamp, sample_list
 
         elif sensor_id == TeenessApplCmdPacket.STREAM_SENSOR_ID_SBC1_ACCEL_TEMPERATURE:
 

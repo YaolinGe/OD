@@ -1,5 +1,3 @@
-from LiveViewer import LiveViewer
-
 import asyncio
 
 #######################################################################################################################
@@ -27,7 +25,6 @@ class _BleCli(Cmd, OdTurningBle):
 
     ###################################################################################################################
     def __init__(self):
-        self.live_viewer = LiveViewer()
 
         Cmd.__init__(self)
         self.prompt = 'ODT_CLI> '
@@ -340,7 +337,6 @@ class _BleCli(Cmd, OdTurningBle):
                         sl[1],
                         sl[2])
                     accel_log_file.write(log_string + "\n")
-
                 elif sensor_id == TeenessApplCmdPacket.STREAM_SENSOR_ID_MCU_HUMIDITY:
                     log_string = "{0:.05f},{1:.03f},{2:.03f}".format(timestamp,
                                                                      sl[0]/1000.0,
@@ -793,7 +789,6 @@ class _BleCli(Cmd, OdTurningBle):
                         sl[1] / 1000000.0,
                         sl[2] / 1000000.0)
                     accel_log_file.write(log_string + "\n")
-                    self.live_viewer.append_accelerometer(log_string)
                 elif sensor_id == TeenessApplCmdPacket.STREAM_SENSOR_ID_SBC1_ACCEL_RAW:
 
                     log_string = "{0:.05f},{1},{2},{3}".format(
@@ -809,32 +804,24 @@ class _BleCli(Cmd, OdTurningBle):
                     hm_log_file.write(log_string + "\n")
                 elif sensor_id == TeenessApplCmdPacket.STREAM_SENSOR_ID_SG_V2_BT:
 
-                    # ==================================================================================================
-                    timestamp_common = timestamp + (sample_counter * sg_bt_average_settling_time)
-
                     if sl[0] == 0:
-                        log_string = "{0:.05f},{1}".format(timestamp_common, sl[1])
+                        log_string = "{0:.05f},{1}".format(timestamp + (sample_counter * sg_bt_average_settling_time), sl[1])
                         sg_bt_ch0_v2_file.write(log_string + "\n")
-                        self.live_viewer.append_strain_gauge_ch0(log_string)
                         sg_bt_ch0_counter += 1
                     elif sl[0] == 1:
-                        log_string = "{0:.05f},{1}".format(timestamp_common, sl[1])
+                        log_string = "{0:.05f},{1}".format(timestamp + (sample_counter * sg_bt_average_settling_time), sl[1])
                         sg_bt_ch1_v2_file.write(log_string + "\n")
-                        self.live_viewer.append_strain_gauge_ch1(log_string)
                         sg_bt_ch1_counter += 1
                     elif sl[0] == 2:
-                        log_string = "{0:.05f},{1}".format(timestamp_common, sl[1])
+                        log_string = "{0:.05f},{1}".format(timestamp + (sample_counter * sg_bt_average_settling_time), sl[1])
                         sg_bt_ch2_v2_file.write(log_string + "\n")
-                        self.live_viewer.append_strain_gauge_ch2(log_string)
                         sg_bt_ch2_counter += 1
                     elif sl[0] == 3:
-                        log_string = "{0:.05f},{1}".format(timestamp_common, sl[1])
+                        log_string = "{0:.05f},{1}".format(timestamp + (sample_counter * sg_bt_average_settling_time), sl[1])
                         sg_bt_ch3_v2_file.write(log_string + "\n")
-                        self.live_viewer.append_strain_gauge_ch3(log_string)
                         sg_bt_ch3_counter += 1
                     else:
                         log_string = "Bad sensor ID: {0}".format(sensor_id)
-                    # ==================================================================================================
 
                     log_string = "{0},{1}".format(log_string, sl[0])
 

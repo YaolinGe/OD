@@ -388,3 +388,103 @@ class OdTurningBle:
         else:
 
             return False
+
+    ###################################################################################################################
+    async def connect_test(self):
+
+            await self.scan_find()
+
+            connect_loop = 0
+
+            await self.connect(delay_after_connect_s=0.0)
+
+            while not msvcrt.kbhit():
+
+                connect_loop += 1
+
+                # await self.connect(delay_after_connect_s=5.0)
+
+                start_time = time.time()
+
+                cmd_loop = 0
+                while cmd_loop < 10:
+                    cmd_loop += 1
+
+                    print("")
+                    print("PKT LOOP START: {0}".format(cmd_loop))
+
+                    print("PC Address:        0x{0:04X}".format(
+                        await self.teeness_protocol.address_request(OdTurningBle.TEST_UUID)))
+
+                    self.teeness_protocol._dest_address = 3
+                    self.teeness_protocol._source_address = 4
+
+                    print("Connected Address: 0x{0:04X}".format(
+                        await self.teeness_protocol.connected_devices_request()))
+
+                    await self.teeness_protocol.appl_cmd_get_information()
+
+                    await self.teeness_protocol.appl_cmd_get_version()
+
+                    print("Device Type:       {0}".format(await self.teeness_protocol.appl_cmd_get_device_type()))
+
+                    print("SYS CLOCK: {0} MHz".format(await self.teeness_protocol.appl_cmd_get_stream_sys_clock()))
+                    await self.teeness_protocol.appl_cmd_set_stream_sys_clock(sys_clock_MHz=48)
+                    print("SYS CLOCK: {0} MHz".format(await self.teeness_protocol.appl_cmd_get_stream_sys_clock()))
+                    await self.teeness_protocol.appl_cmd_set_stream_sys_clock(sys_clock_MHz=12)
+                    print("SYS CLOCK: {0} MHz".format(await self.teeness_protocol.appl_cmd_get_stream_sys_clock()))
+                    await self.teeness_protocol.appl_cmd_set_stream_sys_clock(sys_clock_MHz=96)
+                    print("SYS CLOCK: {0} MHz".format(await self.teeness_protocol.appl_cmd_get_stream_sys_clock()))
+
+                    #print("STREAM START STS: {0}".format(await self.teeness_protocol.appl_cmd_stream_start(2, 4321)))
+                    print("STREAM START STS: {0}".format(
+                        await self.teeness_protocol.appl_cmd_stream_sbc2_strain_gauge_start(
+                            sensor_id=TeenessApplCmdPacket.STREAM_SENSOR_ID_SG_ALL,
+                            analog_input_range=8080,
+                            calib_output_rate_hz=1024,
+                            data_output_rate_hz=100,
+                            dac_offset_mV=0)))
+
+                    await asyncio.sleep(10.0)
+
+                    print("STREAM STOP STS:  {0}".format(await self.teeness_protocol.appl_cmd_stream_stop(
+                        TeenessApplCmdPacket.STREAM_SENSOR_ID_SG_ALL)))
+
+                    print("PKT LOOP END: {0}".format(cmd_loop))
+
+                end_time = time.time()
+
+                # await ble.teeness_protocol.appl_cmd_reboot(delay_before_reboot_ms=4000)
+
+                # await ble.disconnect()
+
+                await self.restart(delay_before_reboot_ms=5000, delay_after_connect_s=0.0)
+
+                total_time = end_time - start_time
+
+                print("CONNECT LOOP TIME: {0:.3f} s/loop {1:.3f} s/cmd".format(
+                    total_time, total_time / (14.0 * cmd_loop)))
+
+                print("CONNECT LOOP END: {0}".format(connect_loop))
+
+                await asyncio.sleep(2.0)
+
+            await ble.disconnect()
+
+            print("")
+
+
+#######################################################################################################################
+#
+#######################################################################################################################
+if __name__ == '__main__':
+
+    try:
+        with OdTurningBle() as ble:
+
+            ble.event_loop.run_until_complete(ble.connect_test())
+
+        exit(0)
+    except:
+        print("ERROR")
+        exit(1)
