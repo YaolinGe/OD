@@ -76,7 +76,11 @@ class MonitorService:
     ###################################################################################################################
     def _callback_status_notification(self, uuid, data):
 
+        print("Data received: {0}".format(data))
+
         self._status = int.from_bytes(data, byteorder='little', signed=False)
+
+        print("STATUS: {0}".format(self._status))
 
         if self._status != MonitorService.STATUS_OK:
             self.sys_status_print()
@@ -85,8 +89,13 @@ class MonitorService:
     async def notifications(self, enable):
 
         if enable:
-
-            await self._client.start_notify(self.STATUS_UUID, self._callback_status_notification)
+            try: 
+                print("Enabling notifications", flush=True)
+                print("STATUS UUID: {0}".format(self.STATUS_UUID), flush=True)
+                await self._client.start_notify(self.STATUS_UUID, self._callback_status_notification)
+            except Exception as e:
+                print("Error: {0}".format(e))
+                raise OdTurningError("Error enabling notifications")
 
         else:
 

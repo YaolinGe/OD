@@ -1,5 +1,4 @@
-from LiveViewer import LiveViewer
-
+from DataStreamPublisher import DataStreamPublisher
 import asyncio
 
 #######################################################################################################################
@@ -27,7 +26,7 @@ class _BleCli(Cmd, OdTurningBle):
 
     ###################################################################################################################
     def __init__(self):
-        self.live_viewer = LiveViewer()
+        self.data_stream_publisher = DataStreamPublisher()
 
         Cmd.__init__(self)
         self.prompt = 'ODT_CLI> '
@@ -138,6 +137,8 @@ class _BleCli(Cmd, OdTurningBle):
     ####################################################################################################################
     async def _connect(self, pos):
 
+        print(f"Connecting: {pos}")
+
         await self.connect(pos)
 
         print("")
@@ -191,6 +192,8 @@ class _BleCli(Cmd, OdTurningBle):
     def do_connect(self, args):
 
         pos = int(args)
+
+        print("CONNECTION ARGS POS: {0}".format(pos))
 
         self.event_loop.run_until_complete(self._connect(pos))
 
@@ -332,6 +335,7 @@ class _BleCli(Cmd, OdTurningBle):
                         sl[1] / 1000000.0,
                         sl[2] / 1000000.0)
                     accel_log_file.write(log_string + "\n")
+                    # await self.data_stream_publisher.send_accelerometer_mG(log_string)
                 elif sensor_id == TeenessApplCmdPacket.STREAM_SENSOR_ID_SBC1_ACCEL_RAW:
 
                     log_string = "{0:.05f},{1},{2},{3}".format(
@@ -340,7 +344,7 @@ class _BleCli(Cmd, OdTurningBle):
                         sl[1],
                         sl[2])
                     accel_log_file.write(log_string + "\n")
-
+                    # await self.data_stream_publisher.send_accelerometer_raw(log_string)
                 elif sensor_id == TeenessApplCmdPacket.STREAM_SENSOR_ID_MCU_HUMIDITY:
                     log_string = "{0:.05f},{1:.03f},{2:.03f}".format(timestamp,
                                                                      sl[0]/1000.0,
@@ -793,7 +797,7 @@ class _BleCli(Cmd, OdTurningBle):
                         sl[1] / 1000000.0,
                         sl[2] / 1000000.0)
                     accel_log_file.write(log_string + "\n")
-                    self.live_viewer.append_accelerometer(log_string)
+                    # await self.data_stream_publisher.send_accelerometer_mG(log_string)
                 elif sensor_id == TeenessApplCmdPacket.STREAM_SENSOR_ID_SBC1_ACCEL_RAW:
 
                     log_string = "{0:.05f},{1},{2},{3}".format(
@@ -802,6 +806,7 @@ class _BleCli(Cmd, OdTurningBle):
                         sl[1],
                         sl[2])
                     accel_log_file.write(log_string + "\n")
+                    # await self.data_stream_publisher.send_accelerometer_raw(log_string)
                 elif sensor_id == TeenessApplCmdPacket.STREAM_SENSOR_ID_MCU_HUMIDITY:
                     log_string = "{0:.05f},{1:.03f},{2:.03f}".format(timestamp,
                                                                      sl[0]/1000.0,
@@ -815,22 +820,22 @@ class _BleCli(Cmd, OdTurningBle):
                     if sl[0] == 0:
                         log_string = "{0:.05f},{1}".format(timestamp_common, sl[1])
                         sg_bt_ch0_v2_file.write(log_string + "\n")
-                        self.live_viewer.append_strain_gauge_ch0(log_string)
+                        await self.data_stream_publisher.send_strain_gauge_ch0(log_string)
                         sg_bt_ch0_counter += 1
                     elif sl[0] == 1:
                         log_string = "{0:.05f},{1}".format(timestamp_common, sl[1])
                         sg_bt_ch1_v2_file.write(log_string + "\n")
-                        self.live_viewer.append_strain_gauge_ch1(log_string)
+                        await self.data_stream_publisher.send_strain_gauge_ch1(log_string)
                         sg_bt_ch1_counter += 1
                     elif sl[0] == 2:
                         log_string = "{0:.05f},{1}".format(timestamp_common, sl[1])
                         sg_bt_ch2_v2_file.write(log_string + "\n")
-                        self.live_viewer.append_strain_gauge_ch2(log_string)
+                        await self.data_stream_publisher.send_strain_gauge_ch2(log_string)
                         sg_bt_ch2_counter += 1
                     elif sl[0] == 3:
                         log_string = "{0:.05f},{1}".format(timestamp_common, sl[1])
                         sg_bt_ch3_v2_file.write(log_string + "\n")
-                        self.live_viewer.append_strain_gauge_ch3(log_string)
+                        await self.data_stream_publisher.send_strain_gauge_ch3(log_string)
                         sg_bt_ch3_counter += 1
                     else:
                         log_string = "Bad sensor ID: {0}".format(sensor_id)
@@ -1300,8 +1305,8 @@ class _BleCli(Cmd, OdTurningBle):
 #######################################################################################################################
 #
 #######################################################################################################################
-if __name__ == '__main__':
 
+def main():
     p = psutil.Process(os.getpid())
 
     p.nice(psutil.ABOVE_NORMAL_PRIORITY_CLASS)
@@ -1310,3 +1315,9 @@ if __name__ == '__main__':
     _BleCli().cmdloop()
 
     exit(0)
+
+
+if __name__ == '__main__':
+    main()
+
+

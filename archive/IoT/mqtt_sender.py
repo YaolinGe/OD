@@ -18,4 +18,4 @@ while True:
     data = random.random()  # Simulate sensor data
     client.publish(topic, str(data))
     print(f"Published: {data}")
-    time.sleep(1)  # Publish every 1 second
+    time.sleep(.01)  # Publish every 1 second

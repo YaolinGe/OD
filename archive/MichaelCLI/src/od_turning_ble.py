@@ -170,8 +170,13 @@ class OdTurningBle:
     ###################################################################################################################
     async def connect(self, device_list_pos=None, delay_after_connect_s=0.0):
 
+        print("Device_list_pos: {0}".format(device_list_pos))
+        print("Delay after connect: {0}".format(delay_after_connect_s))
+
         if device_list_pos is not None:
             self._options.address = self._device_list[device_list_pos][0].address
+
+        print("Device address: ", self._options.address)
 
         loop = 0
 
@@ -185,17 +190,25 @@ class OdTurningBle:
 
                 self._client = BleakClient(self._options.address, disconnected_callback=self.disconnect_callback,
                                            loop=self.event_loop)
+                
+                print("Client is initialized...")
 
-                await asyncio.sleep(0.3)
+                await asyncio.sleep(0.3)  
 
                 if await self._client.connect():
+
+                    print("Connected to: {0}".format(self._options.address))
 
                     self.monitor_service = MonitorService(self._client)
                     self.serial_port_service = SerialPortService(self._client, self.event_loop)
 
+                    print("Services are initialized...")
+
                     retry = 5
 
                     while True:
+
+                        print("Retry: ", retry)
 
                         if self.monitor_service.service_available() and self.serial_port_service.service_available():
                             break
@@ -208,12 +221,20 @@ class OdTurningBle:
                         await asyncio.sleep(0.5)
 
                     await asyncio.sleep(0.3)
+                    print("Enabling notifications...")
                     await self.monitor_service.notifications(enable=True)
+                    print("Monitor service notifications are enabled...")
                     await self.serial_port_service.notifications(enable=True)
+
+                    print("Notifications are enabled...")
 
                     self.teeness_protocol = TeenessProtocol(self._client, self.event_loop, self.serial_port_service)
 
+                    print("Teeness protocol is initialized...")
+
                     self._device_info_service = DeviceInfoService(self._client)
+
+                    print("Device info service is initialized...")
 
                     await asyncio.sleep(delay_after_connect_s)
 

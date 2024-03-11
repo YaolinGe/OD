@@ -5,8 +5,6 @@ Methods:
     - Append stream data, and then view them directly in the browser using Dash.
     - The data is stored in a numpy array, and then displayed in the browser using Dash.
 """
-import asyncio
-import threading
 import numpy as np
 from dash import dcc, html, Dash
 from dash.dependencies import Input, Output
@@ -14,36 +12,16 @@ from dash.exceptions import PreventUpdate
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 
-from DataPool import DataPool
+from DataStreamSubscriber import DataStreamSubscriber
 
 
 class LiveViewer:
 
     def __init__(self) -> None:
-
+        self.data_stream_subscriber = DataStreamSubscriber()
+        self.data_stream_subscriber.start_subscriber_thread()
         self.app = Dash(__name__)
         self.configure_app()
-        self.run_app()
-
-    def append_strain_gauge_ch0(self, log_string: str):
-        data_sg = np.array([float(i) for i in log_string.split(",")]).reshape(1, -1)
-        self.strain_gauge_ch0 = np.append(self.strain_gauge_ch0, data_sg, axis=0)
-
-    def append_strain_gauge_ch1(self, log_string: str):
-        data_sg = np.array([float(i) for i in log_string.split(",")]).reshape(1, -1)
-        self.strain_gauge_ch1 = np.append(self.strain_gauge_ch1, data_sg, axis=0)
-
-    def append_strain_gauge_ch2(self, log_string: str):
-        data_sg = np.array([float(i) for i in log_string.split(",")]).reshape(1, -1)
-        self.strain_gauge_ch2 = np.append(self.strain_gauge_ch2, data_sg, axis=0)
-
-    def append_strain_gauge_ch3(self, log_string: str):
-        data_sg = np.array([float(i) for i in log_string.split(",")]).reshape(1, -1)
-        self.strain_gauge_ch3 = np.append(self.strain_gauge_ch3, data_sg, axis=0)
-
-    def append_accelerometer(self, log_string: str):
-        data_acc = np.array([float(i) for i in log_string.split(",")]).reshape(1, -1)
-        self.accelerometer = np.append(self.accelerometer, data_acc, axis=0)
 
     def configure_app(self) -> None:
         self.app.layout = html.Div([
@@ -62,68 +40,84 @@ class LiveViewer:
             if n == 0:
                 raise PreventUpdate
 
+            data_arrays = self.data_stream_subscriber.data_arrays
+            self.strain_gauge_ch0 = data_arrays["strain_gauge_ch0"]
+            self.strain_gauge_ch1 = data_arrays["strain_gauge_ch1"]
+            self.strain_gauge_ch2 = data_arrays["strain_gauge_ch2"]
+            self.strain_gauge_ch3 = data_arrays["strain_gauge_ch3"]
+            self.accelerometer_raw = data_arrays["accelerometer_raw"]
+
             fig = make_subplots(rows=4, cols=2)
 
             if self.strain_gauge_ch0.size > 0:
                 fig.add_trace(go.Scatter(x=np.arange(len(self.strain_gauge_ch0[:, 0])),
-                                         y=self.strain_gauge_ch0[:, 0],
+                                         y=self.strain_gauge_ch0[:, 1],
                                          mode='lines',
-                                         name='Strain Gauge Ch0'),
+                                         name='Strain Gauge Ch0',
+                                         showlegend=False),
                               row=1, col=1)
 
             if self.strain_gauge_ch1.size > 0:
                 fig.add_trace(go.Scatter(x=np.arange(len(self.strain_gauge_ch1[:, 0])),
-                                         y=self.strain_gauge_ch1[:, 0],
+                                         y=self.strain_gauge_ch1[:, 1],
                                          mode='lines',
-                                         name='Strain Gauge Ch1'),
+                                         name='Strain Gauge Ch1',
+                                         showlegend=False),
                               row=2, col=1)
 
             if self.strain_gauge_ch2.size > 0:
                 fig.add_trace(go.Scatter(x=np.arange(len(self.strain_gauge_ch2[:, 0])),
-                                         y=self.strain_gauge_ch2[:, 0],
+                                         y=self.strain_gauge_ch2[:, 1],
                                          mode='lines',
-                                         name='Strain Gauge Ch2'),
+                                         name='Strain Gauge Ch2',
+                                         showlegend=False),
                               row=3, col=1)
 
             if self.strain_gauge_ch3.size > 0:
                 fig.add_trace(go.Scatter(x=np.arange(len(self.strain_gauge_ch3[:, 0])),
-                                         y=self.strain_gauge_ch3[:, 0],
+                                         y=self.strain_gauge_ch3[:, 1],
                                          mode='lines',
-                                         name='Strain Gauge Ch3'),
+                                         name='Strain Gauge Ch3',
+                                         showlegend=False),
                               row=4, col=1)
 
-            if self.accelerometer.size > 0:
-                fig.add_trace(go.Scatter(x=np.arange(len(self.accelerometer[:, 0])),
-                                         y=self.accelerometer[:, 1],
+            if self.accelerometer_raw.size > 0:
+                fig.add_trace(go.Scatter(x=np.arange(len(self.accelerometer_raw[:, 0])),
+                                         y=self.accelerometer_raw[:, 1],
                                          mode='lines',
-                                         name='Accelerometer X'),
+                                         name='Accelerometer X',
+                                         showlegend=False),
                               row=1, col=2)
 
-                fig.add_trace(go.Scatter(x=np.arange(len(self.accelerometer[:, 0])),
-                                         y=self.accelerometer[:, 2],
+                fig.add_trace(go.Scatter(x=np.arange(len(self.accelerometer_raw[:, 0])),
+                                         y=self.accelerometer_raw[:, 2],
                                          mode='lines',
-                                         name='Accelerometer Y'),
+                                         name='Accelerometer Y',
+                                         showlegend=False),
                               row=2, col=2)
 
-                fig.add_trace(go.Scatter(x=np.arange(len(self.accelerometer[:, 0])),
-                                         y=self.accelerometer[:, 3],
+                fig.add_trace(go.Scatter(x=np.arange(len(self.accelerometer_raw[:, 0])),
+                                         y=self.accelerometer_raw[:, 3],
                                          mode='lines',
-                                         name='Accelerometer Z'),
+                                         name='Accelerometer Z',
+                                         showlegend=False),
                               row=3, col=2)
 
+            # add xlabel, ylabel to mark the corresponding sensor name and channel name for each subplot, such as if data is self.strain_gauge_ch0, then ylabel should be "CH0" and xlabel should be Time [seconds]
+            fig.update_yaxes(title_text="CH0", row=1, col=1)
+            fig.update_yaxes(title_text="CH1", row=2, col=1)
+            fig.update_yaxes(title_text="CH2", row=3, col=1)
+            fig.update_yaxes(title_text="CH3", row=4, col=1)
+            fig.update_yaxes(title_text="ACC X", row=1, col=2)
+            fig.update_yaxes(title_text="ACC Y", row=2, col=2)
+            fig.update_yaxes(title_text="ACC Z", row=3, col=2)
+            fig.update_xaxes(title_text="Time [seconds]", row=4, col=2)
+
+            fig.update_layout(height=800, width=1400)
+
             return fig
-
-    def run_app(self) -> None:
-        def start_loop(loop):
-            asyncio.set_event_loop(loop)
-            loop.run_forever()
-
-        new_loop = asyncio.new_event_loop()
-        t = threading.Thread(target=start_loop, args=(new_loop,))
-        t.start()
-
-        new_loop.call_soon_threadsafe(self.app.run_server, debug=True, use_reloader=False)
 
 
 if __name__ == "__main__":
     lv = LiveViewer()
+    lv.app.run_server(debug=True, use_reloader=False)
