@@ -17,4 +17,6 @@
 - `NIC`: network interface controller
 - `OUI`: organizationally unique identifier, first half of the MAC address, assigned by IEEE for manufacturers
 - `MAC`: media access control
-- 
+
+# How to set up execution policy to run PowerShell scripts
+- `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` for the current user
